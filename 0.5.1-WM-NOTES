@@ -1,0 +1,8 @@
+tile:
+ [ ] meta + drag should have a 'swap' effect
+ [ ] respect window spawn 'direction' hint
+
+float:
+[ ] meta + drag should have a 'snap' approach to attach to edges of other windows
+[ ] autolayouting, allow the binpack to space evenly after finishing
+[ ] desktop icons
