@@ -1,0 +1,10 @@
+[ ] Device redirection, being able to set a devid-
+    to be redirected raw to a set client
+
+[ ] Device input, open a connection point that
+    allows input events to be injected
+
+[ ] Calibration tool for touch
+
+[ ] On- device active/ On- device idle event triggers
+
