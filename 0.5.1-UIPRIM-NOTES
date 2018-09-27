@@ -1,0 +1,18 @@
+Uiprim-bar:
+ [ ] Autohide / Reveal mode on mouse over
+ [ ] Allow bar to nest into center area of other bar
+
+Statusbar:
+ [ ] Add menu paths for statusbar button controls
+
+Lbar:
+ [ ] set_helper support for the menu format,
+     to be used in the hint area on set_input
+
+Popup:
+ [ ] Finish simple version
+
+Tiler/Window:
+ [ ] add support for scrollbars
+ [ ] add support for fixed factor scaling
+ [ ] use uiprim-bar nesting into center area
