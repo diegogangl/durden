@@ -1,0 +1,14 @@
+Flair:
+[ ] Select/ Deselect Effects,
+    Example: Greyscale or blur on deselect
+
+Overview:
+[ ] Add expose mode
+[ ] Switch 'tile' shader use to the rounded setup
+[ ] Add cube / skydome mode
+
+Vr:
+[ ] Add 'button-grid'
+[ ] Add 'orientation-triggered' overlays
+[ ] Add 'free-' layout mode for layer
+[ ] Add profile/ config options
