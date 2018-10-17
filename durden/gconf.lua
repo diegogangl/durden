@@ -406,8 +406,10 @@ function gconfig_statusbar_rebuild(nosynch)
 	end
 
 -- will take care of synching against gconfig_statusbar
-	for tiler in all_tilers_iter() do
-		tiler:rebuild_statusbar_custom();
+	if all_tilers_iter then
+		for tiler in all_tilers_iter() do
+			tiler:rebuild_statusbar_custom();
+		end
 	end
 end
 
