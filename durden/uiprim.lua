@@ -500,8 +500,14 @@ function uiprim_button(anchor, bgshname,
 	return res;
 end
 
-local function bar_resize(bar, neww, newh, time)
+local function bar_resize(bar, neww, newh, time, bar_parent)
 	if (not neww or neww <= 0 or not newh or newh <= 0) then
+		return;
+	end
+
+-- if we are running in nested mode, don't accept a resize from anyone
+-- other than the parent or reanchor / resize / ... may occur
+	if (bar.parent and not bar_parent) then
 		return;
 	end
 
@@ -589,9 +595,36 @@ local function bar_relayout_horiz(bar)
 -- fill region doesn't need to deal with forced- button layout
 	local fair_sz = nvis > 0 and math.floor((rx -lx)/nvis) or 0;
 	if (fair_sz <= 0) then
+
+-- and completely hide the nested bar instead of relayout
+		if (bar.nested) then
+
+-- but it might have been deleted elsewhere, so safeguard
+			if (bar.nested.hide) then
+				bar.nested:hide();
+			else
+				bar.nested = nil;
+			end
+		end
+
 		return;
 	end
 
+-- if we are in nested mode, then just forward the layouting process there
+	if (bar.nested) then
+		print("relayout nested", bar, bar.nested);
+		if (bar.nested.relayout) then
+			bar.nested:show();
+			bar.nested:reanchor(bar.anchor, 1, lx, 0);
+			bar.nested:resize(rx - lx, bar.height, bar.anim_time, bar);
+			return;
+		else
+			bar.nested = nil;
+		end
+	end
+
+	print("relayout normal", bar, bar.nested);
+-- otherwise, sweep the buttons and update labels etc. where appropriate
 	for k,v in ipairs(bar.buttons.center) do
 		if (not v.hidden) then
 			v.minw = fair_sz;
@@ -770,6 +803,7 @@ end
 
 local function bar_state(bar, state, cascade)
 	assert(state);
+
 	if (bar.shader) then
 		bar.state = state;
 		shader_setup(bar.anchor, "ui", bar.shader, state);
@@ -973,6 +1007,35 @@ local function bar_impostor_destroy(tbar)
 	tbar.impostor_mh = nil;
 end
 
+-- Setting a bar nested means unhooking the one that is there currently,
+-- and determine if we should delete or simply relink and restore previous
+-- hide and anchor state. If we inherit, the bar belongs to us and can
+-- safely be :destroyed() when we are or when someone else replaces this
+-- one.
+local function bar_nested(bar, new, closure)
+-- closure is responsible for restoring to old owner or destroying,
+-- just forward the state if we are in destroy or simply replace
+	if (bar.nested_closure) then
+		if (bar.nested) then
+			bar.nested.parent = nil;
+		end
+		bar.nested_closure(false);
+	end
+
+	bar.nested = nil;
+	bar.nested_closure = nil;
+
+-- if no reference is provided, short-out, otherwise assume the caller
+-- provides a proper bar reference and not something else
+	if (new) then
+		new.parent = bar;
+	end
+
+	bar.nested = new;
+	bar.nested_closure = closure;
+	bar:invalidate();
+end
+
 -- work as a horizontal stack of uiprim_buttons,
 -- manages allocation, positioning, animation etc.
 function uiprim_bar(anchor, anchorp, width, height, shdrtgt, mouseh)
@@ -1025,6 +1088,7 @@ function uiprim_bar(anchor, anchorp, width, height, shdrtgt, mouseh)
 		set_impostor = bar_impostor,
 		swap_impostor = bar_impostor_swap,
 		destroy_impostor = bar_impostor_destroy,
+		set_nested = bar_nested,
 
 -- mark all buttons and the bar as having a specific state (e.g. alert)
 		switch_state = bar_state,
@@ -1035,6 +1099,7 @@ function uiprim_bar(anchor, anchorp, width, height, shdrtgt, mouseh)
 		show = bar_show,
 		move = bar_move,
 		tick = bar_tick,
+
 		destroy = bar_destroy
 	};
 

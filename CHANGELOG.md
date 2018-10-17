@@ -1,3 +1,10 @@
+# 0.5.1
+  * uiprim/sbar:
+	   statusbar custom button controls added
+
+  * uiprim/tbar:
+     titlebar merge-to-status bar mode on select
+
 # 0.5.0
   * tools/advfloat:
      window-to-background will now receive input when no window is
