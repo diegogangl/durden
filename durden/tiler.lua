@@ -130,6 +130,29 @@ local function run_event(wnd, event, ...)
 	end
 end
 
+local function wnd_titlebar_to_statusbar(wnd)
+	if (not wnd.titlebar or not wnd.titlebar.hidden or
+		not gconfig_get("titlebar_statusbar")) then
+		return;
+	end
+
+	wnd.wm.statusbar:set_nested(wnd.titlebar,
+		function(destr)
+			if (not wnd.titlebar) then
+				return; -- already destroyed
+			end
+
+			local bw = wnd:border_width();
+			wnd.titlebar:reanchor(wnd.anchor, 4, bw, bw);
+			if (wnd.show_titlebar) then
+				wnd.titlebar:show();
+			else
+				wnd.titlebar:hide();
+			end
+		end
+	);
+end
+
 local function moveup_children(wnd)
 	if (not wnd.parent) then
 		return;
@@ -282,7 +305,10 @@ local function wnd_destroy(wnd, message)
 		end
 	end
 
-	wnd.titlebar:destroy();
+-- prevent the 'titlebar to statusbar" closure from running
+	local tb = wnd.titlebar;
+	wnd.titlebar = nil;
+	tb:destroy();
 
 -- external references are tracked separate from the canvas
 	if (valid_vid(wnd.external) and not wnd.external_prot) then
@@ -307,6 +333,10 @@ local function wnd_destroy(wnd, message)
 		for k,v in pairs(space.listeners) do
 			v(space, k, "lost", wnd);
 		end
+	end
+
+	if (wm.selected) then
+		wnd_titlebar_to_statusbar(wm.selected);
 	end
 end
 
@@ -631,29 +661,6 @@ local function canvas_mouse_activate(wnd)
 	end
 end
 
-local function wnd_titlebar_to_statusbar(wnd)
-	if (not wnd.titlebar or not wnd.titlebar.hidden or
-		not gconfig_get("titlebar_statusbar")) then
-		return;
-	end
-
-	wnd.wm.statusbar:set_nested(wnd.titlebar,
-		function(destr)
-			if (not wnd.titlebar) then
-				return; -- already destroyed
-			end
-
-			local bw = wnd:border_width();
-			wnd.titlebar:reanchor(wnd.anchor, 4, bw, bw);
-			if (wnd.show_titlebar) then
-				wnd.titlebar:show();
-			else
-				wnd.titlebar:hide();
-			end
-		end
-	);
-end
-
 local function wnd_select(wnd, source, mouse)
 	local wm = wnd.wm;
 
@@ -701,9 +708,6 @@ local function wnd_select(wnd, source, mouse)
 	wnd.space.previous = wnd.space.selected;
 	if (wm:active_space() == wnd.space) then
 		wm.selected = wnd;
-
--- the "merge to statusbar" mode only works on hidden titlebars so that
--- the calculations and so-on works correctly
 		wnd_titlebar_to_statusbar(wnd);
 	end
 
@@ -2021,7 +2025,9 @@ local function wnd_size_decor(wnd, w, h, animate)
 		wnd.titlebar:resize(
 			wnd.width - wnd.pad_left - wnd.pad_right + wnd.dh_pad_w, tbh, at, af);
 		wnd.pad_top = wnd.pad_top + tbh;
-	else
+
+-- only hide if we are not in a nested state. otherwise parent decides
+	elseif (not wnd.titlebar.parent) then
 		wnd.titlebar:hide();
 	end
 
@@ -4086,6 +4092,7 @@ local function wnd_ws_attach(res, from_hook)
 			);
 		end
 	end
+	wnd_titlebar_to_statusbar(res);
 
 	for k,v in ipairs(wm.on_wnd_create) do
 		v(wm, res, space, space == wm:active_space());
@@ -4093,7 +4100,7 @@ local function wnd_ws_attach(res, from_hook)
 
 	tiler_debug(wm, "attach:name=" .. res.name);
 	for k,v in pairs(space.listeners) do
-		v(space, k, "attach", wnd);
+		v(space, k, "attach", res);
 	end
 
 	return res;

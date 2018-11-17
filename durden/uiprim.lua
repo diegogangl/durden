@@ -528,6 +528,7 @@ local function bar_resize(bar, neww, newh, time, bar_parent)
 	if (bar.impostor_rz) then
 		bar:impostor_rz(neww, newh, time, bar.anim_func);
 	end
+
 	bar.anim_time = nil;
 end
 
@@ -595,7 +596,6 @@ local function bar_relayout_horiz(bar)
 -- fill region doesn't need to deal with forced- button layout
 	local fair_sz = nvis > 0 and math.floor((rx -lx)/nvis) or 0;
 	if (fair_sz <= 0) then
-
 -- and completely hide the nested bar instead of relayout
 		if (bar.nested) then
 
@@ -612,7 +612,6 @@ local function bar_relayout_horiz(bar)
 
 -- if we are in nested mode, then just forward the layouting process there
 	if (bar.nested) then
-		print("relayout nested", bar, bar.nested);
 		if (bar.nested.relayout) then
 			bar.nested:show();
 			bar.nested:reanchor(bar.anchor, 1, lx, 0);
@@ -623,7 +622,6 @@ local function bar_relayout_horiz(bar)
 		end
 	end
 
-	print("relayout normal", bar, bar.nested);
 -- otherwise, sweep the buttons and update labels etc. where appropriate
 	for k,v in ipairs(bar.buttons.center) do
 		if (not v.hidden) then
@@ -820,6 +818,10 @@ local function bar_state(bar, state, cascade)
 end
 
 local function bar_destroy(bar)
+	if (bar.parent) then
+		bar.parent:set_nested()
+	end
+
 	if (valid_vid(bar.anchor)) then
 		delete_image(bar.anchor);
 	end
